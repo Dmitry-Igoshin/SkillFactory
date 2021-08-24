@@ -54,5 +54,5 @@ print(grouped_director.head(10))
 
 # Вопрос 14. Какой режиссер снял больше всего фильмов в стиле Action?
 # print(Movies[Movies.genres == 'Action'].director.value_counts())                #  .index[0]
-# grouped_director = Movies.groupby(['genres'])['director'].sum().sort_values(ascending=False)
+grouped_director = Movies.groupby(['genres'])['director'].sum().sort_values(ascending=False)
 # print(grouped_director.head(10))
