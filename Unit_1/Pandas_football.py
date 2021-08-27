@@ -1,5 +1,5 @@
 import pandas as pd
-# import numpy as np
+import numpy as np
 
 ''' Метод	        Статистический параметр
     .describe()     Полное описание
@@ -169,3 +169,78 @@ print(football.loc[football['Nationality'] == 'Dominican Republic'][['Name','Clu
 # Посчитайте среднюю зарплату (Wage) и цену (Value) игроков разных позиций (Position).
 # Представители какой позиции имеют самую высокую среднюю ценность?
 print(football.groupby(['Position'])[['Wage','Value']].mean().sort_values(['Value'],ascending=False))
+
+# Функция nunique, которая позволяет посчитать количество уникальных значений по серии.
+# Её лучше всего применять к тем колонкам датафрейма, в которых хранятся категорийные данные:
+# print(football.groupby(['Nationality'])[['Club','Name']].nunique())
+
+# Посчитайте среднюю (mean) и медианную (median) зарплату (Wage) футболистов из разных клубов (Club).
+# В скольких клубах средняя и медианная зарплаты совпадают?
+# Подсказка: чтобы в процессе группировки применить к данным одновременно две агрегирующие функции,
+# необходимо указать их как аргументы метода agg:
+# df.groupby(столбец_для_группировки)[столбцы_для_отображения].agg(['функция_1', 'функция_2'])
+# print(football.groupby(['Club'])['Wage'].median())
+Club_median_mean = football.groupby(['Club'])['Wage'].agg(['median','mean']).reset_index()
+# переименуем столбцы получившегося датафрейма
+Club_median_mean.columns = ['Club','median_Wage','mean_Wage']
+# print(Club_median_mean[Club_median_mean.medianWage == Club_median_mean.meanWage].count())
+print(Club_median_mean[Club_median_mean.median_Wage == Club_median_mean.mean_Wage].sort_values(['mean_Wage'],ascending=False))
+
+# print(football.groupby(['Club'])['Wage'].apply(lambda x: np.mean(x) == np.median(x)))
+# print('123', football.groupby(['Club'])['Wage'].filter(lambda x: np.mean(x) == np.median(x)))
+
+# С помощью функции groupby посчитайте сумму зарплат (Wage) футболистов клуба (Club) "Chelsea"
+sum_Wage = football.groupby(['Club'])['Wage'].sum().sort_values(ascending=False)      # По убыванию
+print(sum_Wage.loc['Chelsea'])
+
+# Определите максимальную зарплату футболиста национальности (Nationality) Аргентина ("Argentina") в возрасте 20 лет
+Argentina_20 = football[(football.Nationality == 'Argentina') & (football.Age == 20)].reset_index()
+Argentina_20_max = Argentina_20[Argentina_20.Wage == Argentina_20.Wage.max()]
+print(Argentina_20_max.Name, Argentina_20_max.Wage)
+
+# Определите максимальную зарплату футболиста национальности (Nationality) Аргентина ("Argentina") в возрасте 30 лет
+Argentina_30 = football[(football.Nationality == 'Argentina') & (football.Age == 30)].reset_index()
+Argentina_30_max = Argentina_30[Argentina_30.Wage == Argentina_30.Wage.max()]
+print(Argentina_30_max.Name, Argentina_30_max.Wage)
+# Определите минимальную зарплату футболиста национальности (Nationality) Аргентина ("Argentina") в возрасте 30 лет
+Argentina_30_min = Argentina_30[Argentina_30.Wage == Argentina_30.Wage.min()]
+print(Argentina_30_min.Name, Argentina_30_min.Wage)
+
+# Определите максимальную силу (Strength) и баланс (Balance) среди игроков клуба (Club) "FC Barcelona"
+# из Аргентины ("Argentina"). Ответ введите через точку с запятой без пробела
+Argentina_Barcelona = football[(football.Nationality == 'Argentina') & (football.Club == 'FC Barcelona')].reset_index()
+Strength_max = Argentina_Barcelona[Argentina_Barcelona.Strength == Argentina_Barcelona.Strength.max()]
+Balance_max = Argentina_Barcelona[Argentina_Barcelona.Balance == Argentina_Barcelona.Balance.max()]
+print(Strength_max.Strength, Balance_max.Balance)
+
+# Сводная таблица, показывающая максимальные зарплаты игроков на разных позициях,
+# играющих за разные клубы, была создана с помощью кода:
+# df2 = football.pivot_table(columns = 'Position', index = 'Club', values = 'Wage', aggfunc = 'max')
+# print(df2)
+# С помощью какого кода можно получить из этой таблицы информацию о максимальной зарплате вратаря (GK),
+# играющего за футбольный клуб "Manchester City"?
+# print(df2.loc['Manchester City']['GK'])
+
+# Для того, чтобы заменить NaN на 0, можно применить дополнительный параметр fill_value.
+# Этот параметр принимает значение, которым нужно заполнить все NaN в получившейся сводной таблице:
+"""pivot = football.loc[football['Club'].isin(['FC Barcelona','Real Madrid','Juventus','Manchester United'])].pivot_table(
+values=['Wage'],index=['Nationality'],columns=['Club'],aggfunc='sum',margins=True,fill_value=0)"""
+# print(pivot)
+
+# Применим другую агрегирующую функцию count, чтобы посчитать количество футболистов по клубам и национальностям:
+"""pivot = football.loc[football['Club'].isin(['FC Barcelona','Real Madrid','Juventus','Manchester United'])].pivot_table(
+values=['Name'],index=['Nationality'],columns=['Club'],aggfunc='count',margins=True,fill_value=0)"""
+# print(pivot)
+# print(pivot.loc['Argentina']['Name']['Manchester United'])
+
+# Создайте сводную таблицу, содержащую сведения о количестве игроков, занимающих разные позиции в каждом клубе.
+# Отсутствующие значения замените нулями.
+pivot = football.pivot_table(values=['Name'],index=['Position'],columns=['Club'],aggfunc='count',margins=True,fill_value=0)
+print(pivot)
+
+# Используя таблицу, созданную на предыдущем шаге, определите, сколько клубов не содержат данных о центральных полузащитниках. (CM)
+# Подсказка: для выполнения этого задания желательно сохранить сводную таблицу в виде отдельного датафрейма
+# и сгруппировать часть данных этого датафрейма с помощью value_counts()
+Position_Club = pivot.reset_index()
+print(Position_Club['Club'].value_counts(normalize=True))
+
